@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { BotConfig, EventLog, EventType, Scenario } from '../types/index.js';
-import { Play, Pause, Square, ChevronRight, Activity, Terminal, ShieldAlert, Heart, User, Sparkles, Brain, X } from 'lucide-react';
+import { Play, Pause, Square, ChevronRight, Activity, Terminal, ShieldAlert, Heart, User, Sparkles, Brain, X, ActivitySquare } from 'lucide-react';
+import { BarChart, Bar, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface LiveMonitorProps {
   isSimulating: boolean;
@@ -25,6 +26,47 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
 }) => {
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const [selectedBotId, setSelectedBotId] = useState<string | null>(null);
+
+  const timelineData = useMemo(() => {
+    if (logs.length === 0) return [];
+
+    const NUM_BUCKETS = 60;
+    const times = logs.map(l => new Date(l.timestamp).getTime());
+    const minTime = Math.min(...times);
+    let maxTime = Math.max(...times);
+    
+    // Add minimal spread to prevent division by zero and look better
+    if (maxTime - minTime < 60000) {
+      maxTime = minTime + 60000;
+    }
+
+    const bucketSize = (maxTime - minTime) / NUM_BUCKETS;
+    
+    const buckets = Array.from({ length: NUM_BUCKETS }, (_, i) => ({
+      time: minTime + i * bucketSize,
+      actions: 0,
+      thinks: 0,
+    }));
+
+    logs.forEach(log => {
+      const time = new Date(log.timestamp).getTime();
+      let bucketIndex = Math.floor((time - minTime) / bucketSize);
+      if (bucketIndex >= NUM_BUCKETS) bucketIndex = NUM_BUCKETS - 1;
+      if (bucketIndex < 0) bucketIndex = 0;
+
+      if (log.type === EventType.BOT_ACTION) {
+        buckets[bucketIndex].actions += 1;
+      } else if (log.type === EventType.BOT_THINK) {
+        buckets[bucketIndex].thinks += 1;
+      }
+    });
+
+    return buckets.map(b => ({
+      time: new Date(b.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      actions: b.actions,
+      thinks: b.thinks,
+    }));
+  }, [logs]);
 
   useEffect(() => {
     // Auto-scroll logs to bottom
@@ -73,7 +115,7 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
   return (
     <div id="live-monitor" className="bg-brand-aside border border-brand-border rounded-none p-4 shadow-none flex flex-col h-full">
       {/* Header bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-brand-border pb-3 mb-4 gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-brand-border pb-3 mb-3 gap-3">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-brand-green animate-pulse" />
           <div>
@@ -111,6 +153,43 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
               </button>
             </>
           )}
+        </div>
+      </div>
+
+      {/* Action Timeline Visualization */}
+      <div className="w-full mb-4 bg-brand-bg/50 border border-brand-border p-2 flex flex-col gap-1">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-1.5">
+            <ActivitySquare className="w-3 h-3 text-brand-muted" />
+            <span className="text-[9px] font-mono font-bold text-brand-muted uppercase tracking-widest">Action Frequency Timeline</span>
+          </div>
+          <div className="flex items-center gap-3 text-[8px] font-mono font-bold uppercase">
+            <div className="flex items-center gap-1"><span className="w-2 h-2 bg-amber-300 block"></span> Actions</div>
+            <div className="flex items-center gap-1"><span className="w-2 h-2 bg-purple-400 block"></span> Thoughts</div>
+          </div>
+        </div>
+        <div className="h-12 w-full mt-1">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={timelineData} barCategoryGap={1}>
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="bg-brand-panel border border-brand-border p-1.5 text-[9px] font-mono shadow-md z-50">
+                        <div className="text-brand-muted mb-1 font-bold">{payload[0].payload.time}</div>
+                        <div className="text-amber-300">Actions: {payload[0].payload.actions}</div>
+                        <div className="text-purple-400">Thoughts: {payload[0].payload.thinks}</div>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+                cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
+              />
+              <Bar dataKey="actions" stackId="a" fill="#fcd34d" isAnimationActive={false} />
+              <Bar dataKey="thinks" stackId="a" fill="#c084fc" isAnimationActive={false} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
@@ -302,7 +381,24 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
               <Terminal className="w-4 h-4 text-brand-green" />
               <span className="text-[10px] font-bold uppercase tracking-wider text-brand-muted">Telemetry Event Logs</span>
             </div>
-            <span className="text-[10px] font-bold text-brand-green">CYCLE: {currentStep}</span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  const blob = new Blob([JSON.stringify(logs, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `simulation-logs-${new Date().toISOString()}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className="text-[9px] uppercase tracking-wider font-bold text-brand-green border border-brand-green hover:bg-brand-green hover:text-brand-bg transition-colors px-2 py-0.5"
+                title="Export Logs as JSON"
+              >
+                Export JSON
+              </button>
+              <span className="text-[10px] font-bold text-brand-green">CYCLE: {currentStep}</span>
+            </div>
           </div>
 
           {/* Console logger output */}

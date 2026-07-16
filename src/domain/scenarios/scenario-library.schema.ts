@@ -25,6 +25,11 @@ export function validateScenarioLibraryItem(item: any): ScenarioV2 {
   }
 
   const lastSavedAt = typeof item.lastSavedAt === 'string' ? item.lastSavedAt : new Date().toISOString();
+  
+  const history = Array.isArray(item.history) ? item.history.map((h: any) => ({
+    timestamp: typeof h.timestamp === 'string' ? h.timestamp : new Date().toISOString(),
+    markdown: typeof h.markdown === 'string' ? h.markdown : '',
+  })) : [];
 
   return {
     id,
@@ -33,5 +38,6 @@ export function validateScenarioLibraryItem(item: any): ScenarioV2 {
     originalMarkdown,
     parsedScenario: item.parsedScenario as Scenario,
     lastSavedAt,
+    history,
   };
 }

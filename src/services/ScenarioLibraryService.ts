@@ -73,6 +73,7 @@ export class ScenarioLibraryService {
               originalMarkdown: rawMd,
               parsedScenario: parsed,
               lastSavedAt: meta.lastSavedAt,
+              history: meta.history || [],
             });
             this.cachedScenarios.set(item.id, item);
           }
@@ -106,6 +107,7 @@ export class ScenarioLibraryService {
       title: validated.title,
       description: validated.description,
       lastSavedAt: validated.lastSavedAt,
+      history: validated.history,
     });
 
     await this.persistence.writeJson(parsedPath, validated.parsedScenario);

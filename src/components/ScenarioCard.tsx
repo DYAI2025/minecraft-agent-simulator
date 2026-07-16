@@ -561,7 +561,29 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <label className="block text-[9px] text-brand-muted uppercase font-mono italic">Scenario Markdown Source</label>
+                  <div className="flex items-center gap-2">
+                    <label className="block text-[9px] text-brand-muted uppercase font-mono italic">Scenario Markdown Source</label>
+                    {currentScenarioId && savedScenarios.find(s => s.id === currentScenarioId)?.history && savedScenarios.find(s => s.id === currentScenarioId)!.history!.length > 0 && (
+                      <select
+                        onChange={(e) => {
+                          const hItem = savedScenarios.find(s => s.id === currentScenarioId)?.history?.find(h => h.timestamp === e.target.value);
+                          if (hItem) {
+                            setMarkdown(hItem.markdown);
+                            handleParseScenario(hItem.markdown);
+                          }
+                        }}
+                        className="bg-brand-bg text-[9px] font-mono text-brand-text border border-brand-border px-1.5 py-0.5 rounded-none focus:outline-none focus:border-brand-green max-w-[120px] cursor-pointer"
+                        defaultValue=""
+                      >
+                        <option value="" disabled>Version History</option>
+                        {savedScenarios.find(s => s.id === currentScenarioId)?.history?.map((h, i) => (
+                          <option key={h.timestamp} value={h.timestamp}>
+                            v{savedScenarios.find(s => s.id === currentScenarioId)!.history!.length - i} ({new Date(h.timestamp).toLocaleTimeString()})
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2">
                     {currentScenarioId === activeScenarioId && (
                       <span className="inline-flex items-center gap-1 text-[8px] text-brand-green font-mono uppercase bg-brand-green/20 border border-brand-green/40 px-1.5 py-0.5 font-bold">
@@ -641,7 +663,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
                         title="Save changes to current scenario"
                       >
                         <Save className="w-3.5 h-3.5" />
-                        {isSaving ? 'Saving...' : 'Update Current'}
+                        {isSaving ? 'Saving...' : 'Save Version'}
                       </button>
                       <button
                         onClick={() => handleSaveScenario(true)}

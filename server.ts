@@ -1,7 +1,6 @@
 import express from 'express';
 import path from 'path';
 import { promises as fs } from 'fs';
-import { createServer as createViteServer } from 'vite';
 import { fileURLToPath } from 'url';
 import { getHttpRuntimeConfig } from './src/config/http-runtime.js';
 import { getStorageRoot, ensureStoragePathSync } from './src/config/storage-paths.js';
@@ -848,6 +847,7 @@ async function startServer() {
         originalMarkdown: markdown || '',
         parsedScenario: finalParsed,
         lastSavedAt: new Date().toISOString(),
+        history: [],
       };
       const saved = await scenarioLibrary.saveScenarioItem(item);
       res.json({ success: true, scenario: saved });
@@ -876,6 +876,12 @@ async function startServer() {
       if (!existing && !finalParsed) {
         return res.status(404).json({ error: 'Scenario not found and no parsed data provided.' });
       }
+      
+      const newHistory = existing?.history ? [...existing.history] : [];
+      if (existing?.originalMarkdown) {
+        newHistory.push({ timestamp: existing.lastSavedAt || new Date().toISOString(), markdown: existing.originalMarkdown });
+      }
+
       const item = {
         id: req.params.id,
         title: title || existing?.title || finalParsed?.title || 'Untitled',
@@ -883,6 +889,7 @@ async function startServer() {
         originalMarkdown: markdown || existing?.originalMarkdown || '',
         parsedScenario: finalParsed || existing?.parsedScenario,
         lastSavedAt: new Date().toISOString(),
+        history: newHistory,
       };
       const saved = await scenarioLibrary.saveScenarioItem(item as any);
       res.json({ success: true, scenario: saved });
@@ -968,6 +975,7 @@ async function startServer() {
 
   // --- VITE MIDDLEWARE SETUP ---
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',

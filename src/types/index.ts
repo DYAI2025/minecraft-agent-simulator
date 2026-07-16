@@ -100,6 +100,7 @@ export interface ScenarioV2 {
   originalMarkdown: string;
   parsedScenario: Scenario;
   lastSavedAt: string;
+  history?: { timestamp: string; markdown: string }[];
 }
 
 export enum EventType {
