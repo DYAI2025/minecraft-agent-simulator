@@ -1,0 +1,2 @@
+{"runId":"run_1783689562434","step":1,"botId":"bot-sally","botName":"Sally","action":"execute","success":true,"message":"Sally walked to coordinates [x: 5, y: 64, z: 12].","timestamp":"2026-07-10T13:19:22.435Z","details":{"x":5,"y":64,"z":12}}
+{"runId":"run_1783689562434","step":2,"botId":"bot-bob","botName":"Bob","action":"error","success":false,"message":"Bob failed to harvest oak_log: block is too far away (194.2 blocks). Range limit is 6.","timestamp":"2026-07-10T13:19:22.436Z","details":{}}

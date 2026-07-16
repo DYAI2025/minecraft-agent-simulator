@@ -1,0 +1,9 @@
+{"id":"evt_x2qylrhma","timestamp":"2026-07-10T13:19:41.710Z","type":"system","message":"--- Simulation Step #1 ---"}
+{"id":"evt_3041orw4c","timestamp":"2026-07-10T13:19:41.711Z","type":"bot_think","botId":"bot-sally","botName":"Sally","message":"Sally is thinking...","details":{"providerId":"gemini-test","model":"gemini-2.5-flash"}}
+{"id":"evt_509dv5svb","timestamp":"2026-07-10T13:19:41.711Z","type":"llm_call","botId":"bot-sally","botName":"Sally","message":"Sally completed model call.","details":{"reason_summary":"Decided to move north to gather food because current health is high.","action":"move","parameters":{"x":5,"y":64,"z":12}}}
+{"id":"evt_mtt2z4u2j","timestamp":"2026-07-10T13:19:41.711Z","type":"bot_action","botId":"bot-sally","botName":"Sally","message":"Sally walked to coordinates [x: 5, y: 64, z: 12].","details":{"x":5,"y":64,"z":12}}
+{"id":"evt_fjk7wwoxh","timestamp":"2026-07-10T13:19:41.711Z","type":"system","message":"--- Simulation Step #2 ---"}
+{"id":"evt_xm9npm2c8","timestamp":"2026-07-10T13:19:41.711Z","type":"bot_think","botId":"bot-bob","botName":"Bob","message":"Bob is thinking...","details":{"providerId":"openai-test","model":"gpt-4o"}}
+{"id":"evt_3lvwz78rk","timestamp":"2026-07-10T13:19:41.711Z","type":"llm_call","botId":"bot-bob","botName":"Bob","message":"Bob completed model call.","details":{"reason_summary":"Attempted to harvest wood block but target was too far.","action":"harvest","parameters":{"blockType":"oak_log","x":200,"y":64,"z":200}}}
+{"id":"evt_dr8m81z68","timestamp":"2026-07-10T13:19:41.711Z","type":"error","botId":"bot-bob","botName":"Bob","message":"Bob failed to harvest oak_log: block is too far away (194.2 blocks). Range limit is 6."}
+{"id":"evt_tara3mlum","timestamp":"2026-07-10T13:19:41.712Z","type":"system","message":"Simulation Run [run_1783689581709] ended with status: completed."}

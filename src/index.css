@@ -1,0 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-display: "Space Grotesk", sans-serif;
+
+  --color-brand-bg: #0A0A0B;
+  --color-brand-text: #E4E3E0;
+  --color-brand-muted: #8E9299;
+  --color-brand-border: #2A2A2E;
+  --color-brand-border-light: #3A3A3F;
+  --color-brand-panel: #121214;
+  --color-brand-aside: #0F0F11;
+  --color-brand-card: #151619;
+  --color-brand-row: #1a1a1c;
+  --color-brand-green: #38e038;
+}
+
+/* Custom styles for grid rendering */
+.grid-cols-30 {
+  grid-template-columns: repeat(30, minmax(0, 1fr));
+}

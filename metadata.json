@@ -1,0 +1,6 @@
+{
+  "name": "MISSI — Minecraft Scenario Simulator",
+  "description": "A live Minecraft Java server simulation control dashboard. Configure server properties, parse scenario Markdown, assign LLM providers to bots, and observe real-time AI-driven bot actions and logs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

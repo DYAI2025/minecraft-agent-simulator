@@ -1,0 +1,122 @@
+{
+  "id": "run_1783613778335",
+  "startTime": "2026-07-09T16:16:18.335Z",
+  "scenarioTitle": "Scientific Test Scenario",
+  "serverConfig": {
+    "serverName": "TEST-SERVER",
+    "levelName": "world",
+    "seed": "123456789",
+    "gameMode": "survival",
+    "difficulty": "normal",
+    "port": 25565,
+    "properties": {}
+  },
+  "status": "completed",
+  "logs": [
+    {
+      "id": "evt_4lp0ghfi5",
+      "timestamp": "2026-07-09T16:16:18.336Z",
+      "type": "system",
+      "message": "Simulation Run [run_1783613778335] started for Scenario: \"Scientific Test Scenario\"."
+    },
+    {
+      "id": "evt_4il32dkh5",
+      "timestamp": "2026-07-09T16:16:18.337Z",
+      "type": "system",
+      "message": "--- Simulation Step #1 ---"
+    },
+    {
+      "id": "evt_tp5j6e6i0",
+      "timestamp": "2026-07-09T16:16:18.337Z",
+      "type": "bot_think",
+      "botId": "bot-sally",
+      "botName": "Sally",
+      "message": "Sally is thinking...",
+      "details": {
+        "providerId": "gemini-test",
+        "model": "gemini-2.5-flash"
+      }
+    },
+    {
+      "id": "evt_wup80aanr",
+      "timestamp": "2026-07-09T16:16:18.337Z",
+      "type": "llm_call",
+      "botId": "bot-sally",
+      "botName": "Sally",
+      "message": "Sally completed model call.",
+      "details": {
+        "reason_summary": "Decided to move north to gather food because current health is high.",
+        "action": "move",
+        "parameters": {
+          "x": 5,
+          "y": 64,
+          "z": 12
+        }
+      }
+    },
+    {
+      "id": "evt_1n8d0pqjk",
+      "timestamp": "2026-07-09T16:16:18.337Z",
+      "type": "bot_action",
+      "botId": "bot-sally",
+      "botName": "Sally",
+      "message": "Sally walked to coordinates [x: 5, y: 64, z: 12].",
+      "details": {
+        "x": 5,
+        "y": 64,
+        "z": 12
+      }
+    },
+    {
+      "id": "evt_fzc9b1nao",
+      "timestamp": "2026-07-09T16:16:18.337Z",
+      "type": "system",
+      "message": "--- Simulation Step #2 ---"
+    },
+    {
+      "id": "evt_d9mfl0fh1",
+      "timestamp": "2026-07-09T16:16:18.337Z",
+      "type": "bot_think",
+      "botId": "bot-bob",
+      "botName": "Bob",
+      "message": "Bob is thinking...",
+      "details": {
+        "providerId": "openai-test",
+        "model": "gpt-4o"
+      }
+    },
+    {
+      "id": "evt_xmqrxg8w2",
+      "timestamp": "2026-07-09T16:16:18.337Z",
+      "type": "llm_call",
+      "botId": "bot-bob",
+      "botName": "Bob",
+      "message": "Bob completed model call.",
+      "details": {
+        "reason_summary": "Attempted to harvest wood block but target was too far.",
+        "action": "harvest",
+        "parameters": {
+          "blockType": "oak_log",
+          "x": 200,
+          "y": 64,
+          "z": 200
+        }
+      }
+    },
+    {
+      "id": "evt_kn2lzxk92",
+      "timestamp": "2026-07-09T16:16:18.337Z",
+      "type": "error",
+      "botId": "bot-bob",
+      "botName": "Bob",
+      "message": "Bob failed to harvest oak_log: block is too far away (194.2 blocks). Range limit is 6."
+    },
+    {
+      "id": "evt_okzrduw73",
+      "timestamp": "2026-07-09T16:16:18.337Z",
+      "type": "system",
+      "message": "Simulation Run [run_1783613778335] ended with status: completed."
+    }
+  ],
+  "endTime": "2026-07-09T16:16:18.337Z"
+}

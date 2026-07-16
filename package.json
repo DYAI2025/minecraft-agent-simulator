@@ -1,0 +1,50 @@
+{
+  "name": "react-example",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx server.ts",
+    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "start": "node dist/server.cjs",
+    "clean": "rm -rf dist server.js",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "missi:verify:sprint2": "tsx scripts/verify-sprint-2.ts",
+    "missi:verify:sprint3": "tsx scripts/verify-sprint-3.ts",
+    "missi:verify:sprint5": "tsx scripts/verify-sprint-5.ts",
+    "missi:verify:sprint6": "tsx scripts/verify-sprint-6.ts",
+    "missi:verify:sprint7": "tsx scripts/verify-sprint-7.ts",
+    "missi:verify:sprint8": "tsx scripts/verify-sprint-8.ts",
+    "missi:verify:railway": "tsx scripts/verify-railway-deploy.ts",
+    "missi:smoke:server": "tsx scripts/smoke-server.ts",
+    "missi:smoke:provider": "tsx scripts/smoke-provider.ts",
+    "missi:smoke:bot": "tsx scripts/smoke-bot.ts",
+    "missi:smoke:e2e": "tsx scripts/smoke-e2e.ts"
+  },
+  "dependencies": {
+    "@google/genai": "^2.4.0",
+    "@tailwindcss/vite": "^4.1.14",
+    "@vitejs/plugin-react": "^5.0.4",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "lucide-react": "^0.546.0",
+    "mineflayer": "^4.37.1",
+    "motion": "^12.23.24",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
+    "vite": "^6.2.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.14.0",
+    "autoprefixer": "^10.4.21",
+    "esbuild": "^0.25.0",
+    "tailwindcss": "^4.1.14",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.3",
+    "vitest": "^4.1.10"
+  }
+}

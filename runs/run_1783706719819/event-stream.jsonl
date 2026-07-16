@@ -1,0 +1,6 @@
+{"id":"evt_9p98hrili","timestamp":"2026-07-10T18:05:19.822Z","type":"system","message":"Simulation Run [run_1783706719819] started for Scenario: \"Sprint 7 Test Scenario\"."}
+{"id":"evt_j38jgc86m","timestamp":"2026-07-10T18:05:19.824Z","type":"system","message":"--- Simulation Step #1 ---"}
+{"id":"evt_1zkfrtkzb","timestamp":"2026-07-10T18:05:19.825Z","type":"bot_think","botId":"alice-bot","botName":"Alice","message":"Alice is thinking...","details":{"providerId":"gemini","model":"gemini-2.5-flash"}}
+{"id":"evt_k7t9vbh4e","timestamp":"2026-07-10T18:05:19.825Z","type":"llm_call","botId":"alice-bot","botName":"Alice","message":"Alice decided action.","details":{"reason_summary":"Locating trees to chop.","action":"move","parameters":{"apiKey":"[REDACTED_API_KEY]"},"decisionSource":"real_provider","activeGoal":"Harvest wood","confidence":0.95,"observationSummary":"Alice sees 3 trees"}}
+{"id":"evt_3iqxzoosl","timestamp":"2026-07-10T18:05:19.825Z","type":"bot_action","botId":"alice-bot","botName":"Alice","message":"Alice harvested wood block.","details":{"success":true,"secretKey":"[REDACTED_API_KEY]"}}
+{"id":"evt_wxfa2dozg","timestamp":"2026-07-10T18:05:20.130Z","type":"system","message":"Simulation Run [run_1783706719819] ended with status: completed."}
