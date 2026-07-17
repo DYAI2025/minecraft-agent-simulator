@@ -68,8 +68,9 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
     }));
   }, [logs]);
 
-  // Removed auto-scroll effect to prevent jumping when user is reading logs
+  // Removed auto-scroll to prevent jumping when user is scrolling manually
   // useEffect(() => {
+  //   // Auto-scroll logs to bottom
   //   terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   // }, [logs]);
 
@@ -113,9 +114,9 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
   };
 
   return (
-    <div id="live-monitor" className="bg-brand-aside border border-brand-border rounded-none p-4 shadow-none flex flex-col h-full">
+    <div id="live-monitor" className="bg-brand-aside border brand-border rounded-none p-4 shadow-none flex flex-col h-full">
       {/* Header bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-brand-border pb-3 mb-3 gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b brand-border pb-3 mb-3 gap-3">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-brand-green animate-pulse" />
           <div>
@@ -147,7 +148,7 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
               <button
                 onClick={onStepManual}
                 disabled={bots.length === 0}
-                className="flex-grow sm:flex-grow-0 flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase px-3 py-1.5 bg-brand-border-light border brand-border text-brand-text rounded-none hover:bg-brand-border transition-colors disabled:opacity-40"
+                className="flex-grow sm:flex-grow-0 flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase px-3 py-1.5 bg-brand-border-light border brand-border text-brand-text rounded-none hover:bg-border transition-colors disabled:opacity-40"
               >
                 <ChevronRight className="w-3.5 h-3.5 text-brand-green" /> Step Manual
               </button>
@@ -164,8 +165,8 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
             <span className="text-[9px] font-mono font-bold text-brand-muted uppercase tracking-widest">Action Frequency Timeline</span>
           </div>
           <div className="flex items-center gap-3 text-[8px] font-mono font-bold uppercase">
-            <div className="flex items-center gap-1"><span className="w-2 h-2 bg-amber-300 block"></span> Actions</div>
-            <div className="flex items-center gap-1"><span className="w-2 h-2 bg-purple-400 block"></span> Thoughts</div>
+            <div className="flex items-center gap-1><span className="w-2 h-2 bg-amber-300 block"></span> Actions</div>
+            <div className="flex items-center gap-1><span className="w-2 h-2 bg-purple-400 block"></span> Thoughts</div>
           </div>
         </div>
         <div className="h-12 w-full mt-1">
@@ -213,11 +214,9 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
                         type="checkbox"
                         checked={!!completed}
                         readOnly
-                        className="mt-0.5 w-3 h-3 rounded-none border-border text-brand-green bg-brand-bg focus:ring-0 cursor-default"
+                        className="mt-0.5 w-3 h-3 rounded-none border-brand-border text-brand-green bg-brand-bg focus:ring-0 cursor-default"
                       />
-                      <span className={completed ? 'text-brand-muted line-through opacity-60' : 'text-brand-text'}>
-                        {obj}
-                      </span>
+                      <span className={completed ? 'text-brand-muted line-through opacity-60' : 'text-brand-text'}>{obj}</span>
                     </div>
                   );
                 })}
@@ -235,7 +234,7 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
                   <div
                     key={bot.id}
                     onClick={() => setSelectedBotId(selectedBotId === bot.id ? null : bot.id)}
-                    className={`border-b brand-border pb-3 last:border-b-0 last:pb-0 font-mono cursor-pointer transition-all hover:bg-brand-panel/60 p-2 -mx-2 rounded-none select-none ${
+                    className={`border-b border-brand-border pb-3 last:border-b-0 last:pb-0 font-mono cursor-pointer transition-all hover:bg-brand-panel/60 p-2 -mx-2 rounded-none select-none ${
                       selectedBotId === bot.id
                         ? 'bg-brand-green/5 border border-dashed border-brand-green/40 p-2'
                         : 'border border-transparent'
@@ -274,62 +273,167 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
                       <span className="text-[9px] text-brand-muted block font-mono uppercase mb-1">INVENTORY_CONTENTS:</span>
                       {Object.keys(bot.inventory).length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {Object.entries(bot.inventory).map(([item, qty]) => (
-                            <div key={item} className="flex items-center gap-1 bg-brand-panel border brand-border/60 px-2 py-0.5 rounded-none text-[9px] font-mono">
-                              <span className="font-medium">{item}:</span> <span>{qty}</span>
-                            </div>
+                          {Object.entries(bot.inventory).map(([item, count]) => (
+                            <span key={item} className="text-[9px] bg-brand-panel border brand-border text-brand-green px-1.5 py-0.5 rounded-none font-mono font-bold">
+                              {item}:{count}
+                            </span>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-[9px] text-brand-muted font-mono">None</span>
+                        <span className="text-[9px] text-brand-muted italic">EMPTY</span>
                       )}
                     </div>
                   </div>
-                )}
+                ))}
               </div>
             ) : (
-              <p className="text-[10px] text-brand-muted font-mono italic">No active bots.</p>
+              <div className="text-center p-6 text-brand-muted italic text-xs font-mono uppercase">
+                No active entities spawned.
+              </div>
             )}
           </div>
-        }
 
-        {/* Right Column: Logs */}
-        <div className="lg:col-span-2 space-y-4 flex flex-col h-full">
-          <h3 className="text-[10px] font-mono font-bold text-brand-green uppercase tracking-widest mb-2.5 block">// SYSTEM LOGS</h3>
-          <div
-            className="bg-brand-bg border brand-border rounded-none p-3.5 flex-grow overflow-y-auto"
-          >
-            {logs.map((log, index) => (
-              <div key={log.id} className="mb-2 last:mb-0">
-                <div className="flex items-start gap-2">
-                  <div className="flex items-center gap-1 text-[9px] font-mono">
-                    <span className={`${getLogTagColor(log.type)} px-1.5 py-0.5 rounded text-[8px] font-mono`}>{getLogTag(log.type)}</span>
-                    <span className="ml-1 text-[9px] font-mono text-brand-muted">[new Date(log.timestamp).toLocaleTimeString()]</span>
+          {/* Cognitive Profile Inspector */}
+          {(() => {
+            const selectedBot = bots.find(b => b.id === selectedBotId);
+            const selectedBotLogs = logs.filter(
+              (log) => log.botId === selectedBotId || (log.botName && log.botName === selectedBot?.name)
+            );
+
+            if (!selectedBot) return null;
+
+            return (
+              <div className="bg-brand-bg border brand-border p-3.5 space-y-3 font-mono">
+                <div className="flex items-center justify-between border-b brand-border pb-2">
+                  <div className="flex items-center gap-1.5">
+                    <Brain className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+                    <span className="text-[10px] font-bold text-brand-green uppercase tracking-widest">// COGNITIVE INSPECTOR</span>
                   </div>
-                  <div className="flex-1 ml-2 space-y-0.5 text-[9px] font-mono leading-relaxed" style={{ whiteSpace: 'pre-wrap' }}>
-                    <span className={`${getLogStyle(log.type)}`}>{log.message}</span>
-                    {log.meta && Object.keys(log.meta).length > 0 && (
-                      <div className="mt-1 text-[8px] font-mono text-brand-muted">
-                        {JSON.stringify(log.meta)}
-                      </div>
-                    )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedBotId(null);
+                    }}
+                    className="text-brand-muted hover:text-brand-text transition-colors p-0.5"
+                    title="Close Inspector"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Bot Meta */}
+                <div className="space-y-1">
+                  <div className="text-xs font-bold text-brand-text">{selectedBot.name}</div>
+                  <div className="text-[9px] text-brand-muted">ROLE: {selectedBot.role}</div>
+                  <div className="text-[9px] text-brand-muted">MODEL: {selectedBot.model} ({selectedBot.providerId})</div>
+                </div>
+
+                {/* Current Goal */}
+                <div className="bg-brand-panel/50 border brand-border p-2">
+                  <span className="text-[8px] text-brand-muted block uppercase tracking-wide mb-1 font-bold">CURRENT_GOAL_THREAD:</span>
+                  <p className="text-[10px] text-brand-text font-medium leading-relaxed italic">
+                    "{selectedBot.goal || 'Stand by / idle'}"
+                  </p>
+                </div>
+
+                {/* Vitals, Coordinates & State Indicators */}
+                <div className="grid grid-cols-2 gap-2 text-[9px]">
+                  <div className="border brand-border p-1.5">
+                    <span className="text-brand-muted block uppercase font-bold text-[8px] mb-0.5">LOCATION:</span>
+                    <span className="text-brand-green font-bold">[X:{selectedBot.x}, Y:{selectedBot.y}, Z:{selectedBot.z}]</span>
+                  </div>
+                  <div className="border brand-border p-1.5">
+                    <span className="text-brand-muted block uppercase font-bold text-[8px] mb-0.5">HEALTH/FOOD:</span>
+                    <span className="text-brand-text font-bold">{selectedBot.health} HP | {selectedBot.food} F</span>
                   </div>
                 </div>
+
+                {/* Recent Thought Processes / Log stream */}
+                <div>
+                  <span className="text-[8px] text-brand-muted block uppercase font-bold mb-1 tracking-wide">COGNITIVE_LOG_STREAM:</span>
+                  {selectedBotLogs.length > 0 ? (
+                    <div className="bg-brand-panel/30 brand-border p-2 max-h-[140px] overflow-y-auto space-y-1.5 text-[9px] leading-tight font-mono scrollbar-thin">
+                      {selectedBotLogs.map((log) => (
+                        <div key={log.id} className="border-b brand-border/40 pb-1 last:border-b-0 last:pb-0">
+                          <div className="flex items-center justify-between opacity-60 text-[8px] mb-0.5">
+                            <span>{new Date(log.timestamp).toLocaleTimeString()}</span>
+                            <span className="font-bold text-purple-400">{getLogTag(log.type)}</span>
+                          </div>
+                          <p className={`${getLogStyle(log.type)} whitespace-pre-wrap break-all`}>
+                            {log.message}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-brand-panel/30 brand-border p-3 text-center text-brand-muted text-[9px] italic">
+                      NO LOGS RECORDED FOR THIS COGNITIVE THREAD YET
+                    </div>
+                  )}
+                </div>
               </div>
-            ))}
-          </div>
+            );
+          })()}
         </div>
 
-        {/* Right Column: Bot Insights (when a bot is selected) */}
-        {selectedBotId && bots.find(b => b.id === selectedBotId) && (
-          <div className="lg:col-span-2 space-y-4 flex flex-col h-full">
-            <h3 className="text-[10px] font-mono font-bold text-brand-green uppercase tracking-widest mb-2.5 block">// BOT INSIGHTS</h3>
-            <div className="bg-brand-bg border brand-border rounded-none p-3.5 flex-grow overflow-y-auto">
-              {/* Placeholder for detailed bot info */}
-              <p className="text-[10px] text-brand-muted font-mono italic">Detailed bot view coming soon...</p>
+        {/* Right Column: Live Event Terminal */}
+        <div className="lg:col-span-2 flex flex-col bg-brand-bg border brand-border rounded-none overflow-hidden h-[300px] lg:h-auto min-h-[400px]">
+          {/* Bar top */}
+          <div className="bg-brand-panel border-b brand-border px-4 py-2 flex items-center justify-between font-mono">
+            <div className="flex items-center gap-1.5">
+              <Terminal className="w-4 h-4 text-brand-green" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-muted">Telemetry Event Logs</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  const blob = new Blob([JSON.stringify(logs, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `simulation-logs-${new Date().toISOString()}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className="text-[9px] uppercase tracking-wider font-bold text-brand-green border brand-green hover:bg-brand-green hover:text-brand-bg transition-colors px-2 py-0.5"
+                title="Export Logs as JSON"
+              >
+                Export JSON
+              </button>
+              <span className="text-[10px] font-bold text-brand-green">CYCLE: {currentStep}</span>
             </div>
           </div>
-        )}
+
+          {/* Console logger output */}
+          <div className="flex-grow p-4 overflow-y-auto font-mono text-[11px] space-y-1.5 max-h-[450px] bg-brand-bg">
+            {logs.length > 0 ? (
+              logs.map((log) => (
+                <div key={log.id} className="flex items-start gap-2.5 leading-relaxed">
+                  <span className="text-[9px] text-brand-muted select-none shrink-0 mt-0.5">
+                    {new Date(log.timestamp).toLocaleTimeString()}
+                  </span>
+                  <span className={`text-[9px] font-bold border rounded-none px-1 shrink-0 ${getLogTagColor(log.type)}`}>
+                    {getLogTag(log.type)}
+                  </span>
+                  {log.botName && (
+                    <span className="text-purple-400 font-bold shrink-0">
+                      [{log.botName}]
+                    </span>
+                  )}
+                  <span className={`${getLogStyle(log.type)} whitespace-pre-wrap break-all`}>
+                    {log.message}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-brand-muted italic text-center py-20 uppercase font-mono">
+                <Terminal className="w-6 h-6 text-brand-border mb-2" />
+                <span>Await event triggers...</span>
+              </div>
+            )}
+            <div ref={terminalEndRef} />
+          </div>
+        </div>
       </div>
     </div>
   );
