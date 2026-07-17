@@ -165,8 +165,8 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
             <span className="text-[9px] font-mono font-bold text-brand-muted uppercase tracking-widest">Action Frequency Timeline</span>
           </div>
           <div className="flex items-center gap-3 text-[8px] font-mono font-bold uppercase">
-            <div className="flex items-center gap-1><span className="w-2 h-2 bg-amber-300 block"></span> Actions</div>
-            <div className="flex items-center gap-1><span className="w-2 h-2 bg-purple-400 block"></span> Thoughts</div>
+            <div className="flex items-center gap-1"><span className="w-2 h-2 bg-amber-300 block"></span> Actions</div>
+            <div className="flex items-center gap-1"><span className="w-2 h-2 bg-purple-400 block"></span> Thoughts</div>
           </div>
         </div>
         <div className="h-12 w-full mt-1">
