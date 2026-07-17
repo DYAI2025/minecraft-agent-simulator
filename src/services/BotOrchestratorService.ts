@@ -4,6 +4,8 @@ import { MinecraftServerService } from './MinecraftServerService.js';
 import { EventStoreService } from './EventStoreService.js';
 import { MineflayerBotAdapter } from '../adapters/minecraft/MineflayerBotAdapter.js';
 import { SettingsService } from './SettingsService.js';
+import { LPAMService } from './LPAMService.js';
+import { BotExperience, BotStrategy } from './LPAMService.js';
 
 export class BotOrchestratorService {
   private static instance: BotOrchestratorService | null = null;

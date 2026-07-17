@@ -12,49 +12,55 @@ export class MineflayerBotAdapter {
   ) {}
 
   public connect(): Promise<boolean> {
-    return new Promise((resolve) => {
-      try {
-        this.onLog(`[Mineflayer Sockets] Initiating connection for "${this.name}" to ${this.host}:${this.port}...`);
-        
-        this.bot = mineflayer.createBot({
-          host: this.host,
-          port: this.port,
-          username: this.name,
-          version: '1.20',
-        });
-
-        // Set up robust event handlers to prevent unhandled node errors
-        this.bot.on('login', () => {
-          this.onLog(`[Mineflayer Sockets] Bot ${this.name} successfully logged in.`);
-        });
-
-        this.bot.on('spawn', () => {
-          this.isConnected = true;
-          this.onLog(`[Mineflayer Sockets] Bot ${this.name} spawned in world successfully at [${this.bot.entity.position.toString()}].`);
-          resolve(true);
-        });
-
-        this.bot.on('error', (err: any) => {
-          this.onLog(`[Mineflayer Sockets Error] Bot ${this.name} connection failed: ${err.message}`, true);
-          this.isConnected = false;
-          resolve(false);
-        });
-
-        this.bot.on('kicked', (reason: string) => {
-          this.onLog(`[Mineflayer Sockets] Bot ${this.name} kicked from server. Reason: ${reason}`, true);
-          this.isConnected = false;
-        });
-
-        this.bot.on('end', () => {
-          this.onLog(`[Mineflayer Sockets] Bot ${this.name} connection terminated.`);
-          this.isConnected = false;
-        });
-      } catch (err: any) {
-        this.onLog(`[Mineflayer Exception] Error establishing bot socket: ${err.message}`, true);
-        this.isConnected = false;
-        resolve(false);
-      }
+    let resolveRef: (value: boolean) => void;
+    const promise = new Promise<boolean>((resolve) => {
+      resolveRef = resolve;
     });
+
+    try {
+      this.onLog(`[Mineflayer Sockets] Initiating connection for "${this.name}" to ${this.host}:${this.port}...`);
+      
+      this.bot = mineflayer.createBot({
+        host: this.host,
+        port: this.port,
+        username: this.name,
+        version: '1.20.4',
+        auth: 'offline',
+      });
+
+      // Set up robust event handlers to prevent unhandled node errors
+      this.bot.on('login', () => {
+        this.onLog(`[Mineflayer Sockets] Bot ${this.name} successfully logged in.`);
+      });
+
+      this.bot.on('spawn', () => {
+        this.isConnected = true;
+        this.onLog(`[Mineflayer Sockets] Bot ${this.name} spawned in world successfully at [${this.bot.entity.position.toString()}].`);
+        if (resolveRef) resolveRef(true);
+      });
+
+      this.bot.on('error', (err: any) => {
+        this.onLog(`[Mineflayer Sockets Error] Bot ${this.name} connection failed: ${err.message}`, true);
+        this.isConnected = false;
+        if (resolveRef) resolveRef(false);
+      });
+
+      this.bot.on('kicked', (reason: string) => {
+        this.onLog(`[Mineflayer Sockets] Bot ${this.name} kicked from server. Reason: ${reason}`, true);
+        this.isConnected = false;
+      });
+
+      this.bot.on('end', () => {
+        this.onLog(`[Mineflayer Sockets] Bot ${this.name} connection terminated.`);
+        this.isConnected = false;
+      });
+    } catch (err: any) {
+      this.onLog(`[Mineflayer Exception] Error establishing bot socket: ${err.message}`, true);
+      this.isConnected = false;
+      if (resolveRef) resolveRef(false);
+    }
+
+    return promise;
   }
 
   public disconnect() {
@@ -88,33 +94,131 @@ export class MineflayerBotAdapter {
           case 'move': {
             const { x, y, z } = params;
             if (x !== undefined && z !== undefined) {
-              // Direct coordinates look/step
-              const yaw = Math.atan2(x - this.bot.entity.position.x, z - this.bot.entity.position.z);
-              this.bot.look(yaw, 0, true);
+              // Use mineflayer-pathfinder for proper pathfinding
+              const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
+              if (!this.bot.pathfinder) {
+                this.bot.loadPlugin(pathfinder);
+              }
               
-              // Move slightly in direction
-              this.bot.setControlState('forward', true);
-              setTimeout(() => {
-                if (this.bot) {
-                  this.bot.setControlState('forward', false);
-                }
-                resolve(true);
-              }, 500);
+              const movements = new Movements(this.bot);
+              this.bot.pathfinder.setMovements(movements);
+              
+              const goal = new goals.GoalBlock(x, y ?? this.bot.entity.position.y, z);
+              this.bot.pathfinder.setGoal(goal, true);
+              
+              // Wait a bit for movement to start
+              setTimeout(() => resolve(true), 1000);
             } else {
               resolve(true);
             }
             break;
           }
           case 'harvest': {
-            const { blockType } = params;
-            this.bot.chat(`I am attempting to harvest ${blockType || 'nearby block'}`);
-            resolve(true);
+            const { blockType, x, y, z } = params;
+            const targetPos = x !== undefined && y !== undefined && z !== undefined 
+              ? { x, y, z } 
+              : this.findNearestBlock(blockType);
+            
+            if (targetPos) {
+              const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
+              if (!this.bot.pathfinder) {
+                this.bot.loadPlugin(pathfinder);
+              }
+              const movements = new Movements(this.bot);
+              this.bot.pathfinder.setMovements(movements);
+              this.bot.pathfinder.setGoal(new goals.GoalBlock(targetPos.x, targetPos.y, targetPos.z));
+              
+              // Wait then dig
+              setTimeout(() => {
+                const block = this.bot.blockAt(targetPos);
+                if (block) {
+                  this.bot.dig(block, (err) => {
+                    if (err) this.onLog(`[Mineflayer] Dig error: ${err.message}`, true);
+                    resolve(true);
+                  });
+                } else {
+                  resolve(true);
+                }
+              }, 2000);
+            } else {
+              this.bot.chat(`No ${blockType || 'block'} found nearby to harvest`);
+              resolve(true);
+            }
             break;
           }
           case 'place': {
-            const { blockType } = params;
-            this.bot.chat(`I am attempting to place ${blockType || 'block'}`);
-            resolve(true);
+            const { blockType, x, y, z } = params;
+            const referencePos = x !== undefined && y !== undefined && z !== undefined 
+              ? { x, y, z }
+              : this.findPlacePosition(blockType);
+            
+            if (referencePos) {
+              const block = this.bot.blockAt(referencePos);
+              if (block) {
+                const item = this.findItemInInventory(blockType);
+                if (item) {
+                  this.bot.equip(item, 'hand', (err) => {
+                    if (err) {
+                      this.onLog(`[Mineflayer] Equip error: ${err.message}`, true);
+                      resolve(true);
+                      return;
+                    }
+                    this.bot.placeBlock(block, item, (err) => {
+                      if (err) this.onLog(`[Mineflayer] Place error: ${err.message}`, true);
+                      resolve(true);
+                    });
+                  });
+                } else {
+                  this.bot.chat(`No ${blockType} in inventory to place`);
+                  resolve(true);
+                }
+              } else {
+                resolve(true);
+              }
+            } else {
+              this.bot.chat(`Cannot find valid position to place ${blockType || 'block'}`);
+              resolve(true);
+            }
+            break;
+          }
+          case 'craft': {
+            const { itemType, count = 1 } = params;
+            const recipe = this.findRecipe(itemType);
+            if (recipe) {
+              this.bot.craft(recipe, count, (err) => {
+                if (err) this.onLog(`[Mineflayer] Craft error: ${err.message}`, true);
+                resolve(true);
+              });
+            } else {
+              this.bot.chat(`Don't know how to craft ${itemType}`);
+              resolve(true);
+            }
+            break;
+          }
+          case 'equip': {
+            const { itemType, slot = 'hand' } = params;
+            const item = this.findItemInInventory(itemType);
+            if (item) {
+              this.bot.equip(item, slot, (err) => {
+                if (err) this.onLog(`[Mineflayer] Equip error: ${err.message}`, true);
+                resolve(true);
+              });
+            } else {
+              this.bot.chat(`No ${itemType} in inventory to equip`);
+              resolve(true);
+            }
+            break;
+          }
+          case 'pathfind': {
+            const { x, y, z } = params;
+            const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
+            if (!this.bot.pathfinder) {
+              this.bot.loadPlugin(pathfinder);
+            }
+            const movements = new Movements(this.bot);
+            this.bot.pathfinder.setMovements(movements);
+            this.bot.pathfinder.setGoal(new goals.GoalBlock(x, y ?? this.bot.entity.position.y, z), true);
+            setTimeout(() => resolve(true), 1000);
             break;
           }
           default:
@@ -125,5 +229,57 @@ export class MineflayerBotAdapter {
         resolve(false);
       }
     });
+  }
+
+  private findNearestBlock(blockType?: string): { x: number; y: number; z: number } | null {
+    if (!this.bot || !blockType) return null;
+    const mcData = require('minecraft-data')(this.bot.version);
+    const blocksByName = mcData.blocksByName as Record<string, { name: string; id: number }>;
+    const blockIds = Object.values(blocksByName).filter(b => 
+      blockType ? b.name.includes(blockType.toLowerCase()) : true
+    ).map(b => b.id);
+    
+    const block = this.bot.findBlock({
+      matching: blockIds,
+      maxDistance: 32,
+      count: 1
+    });
+    return block ? { x: block.position.x, y: block.position.y, z: block.position.z } : null;
+  }
+
+  private findPlacePosition(blockType?: string): { x: number; y: number; z: number } | null {
+    if (!this.bot) return null;
+    const pos = this.bot.entity.position;
+    const offsets: [number, number, number][] = [
+      [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1],
+      [1, 1, 0], [-1, 1, 0], [0, 1, 1], [0, 1, -1]
+    ];
+    for (const [dx, dy, dz] of offsets) {
+      const checkPos = pos.offset(dx, dy, dz);
+      const block = this.bot.blockAt(checkPos);
+      if (block && block.name === 'air') {
+        const below = this.bot.blockAt(pos.offset(dx, dy - 1, dz));
+        if (below && below.name !== 'air') {
+          return { x: checkPos.x, y: checkPos.y, z: checkPos.z };
+        }
+      }
+    }
+    return null;
+  }
+
+  private findItemInInventory(itemName: string) {
+    if (!this.bot) return null;
+    const mcData = require('minecraft-data')(this.bot.version);
+    const item = mcData.itemsByName[itemName.toLowerCase()];
+    if (!item) return null;
+    return this.bot.inventory.items().find(i => i.type === item.id);
+  }
+
+  private findRecipe(itemName: string) {
+    if (!this.bot) return null;
+    const mcData = require('minecraft-data')(this.bot.version);
+    const item = mcData.itemsByName[itemName.toLowerCase()];
+    if (!item) return null;
+    return this.bot.recipesAll.find(r => r.resultId === item.id);
   }
 }
