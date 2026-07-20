@@ -1,0 +1,43 @@
+{
+  "title": "Colleague Exploration",
+  "description": "Agents map out the server map coordinates together and exchange research ideas.",
+  "objectives": [
+    "Traverse from corner to corner",
+    "Chat with team members to discuss world seeds",
+    "Share coordinates of interesting formations"
+  ],
+  "bots": [
+    {
+      "id": "bot_3xfa715p8",
+      "name": "ExplorerEli",
+      "role": "Field cartographer",
+      "goal": "Move around corners, search for lakes, and talk with Ava",
+      "providerId": "gemini",
+      "model": "gemini-3.5-flash",
+      "inventory": {
+        "map": 1
+      },
+      "x": -10,
+      "y": 64,
+      "z": -10,
+      "health": 20,
+      "food": 20
+    },
+    {
+      "id": "bot_946s8o2pc",
+      "name": "SurveyorAva",
+      "role": "Landscape analyst",
+      "goal": "Stand near center, verify grid levels, and log findings in chat",
+      "providerId": "gemini",
+      "model": "gemini-3.5-flash",
+      "inventory": {
+        "compass": 1
+      },
+      "x": 2,
+      "y": 64,
+      "z": 2,
+      "health": 20,
+      "food": 20
+    }
+  ]
+}

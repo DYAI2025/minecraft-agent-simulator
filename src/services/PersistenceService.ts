@@ -1,13 +1,13 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { getStoragePath } from '../config/storage-paths.js';
+import { getStorageRoot } from '../config/storage-paths.js';
 
 export class PersistenceService {
   private static instance: PersistenceService | null = null;
   private baseDir: string;
 
   private constructor() {
-    this.baseDir = getStoragePath('data');
+    this.baseDir = getStorageRoot();
   }
 
   public static getInstance(): PersistenceService {

@@ -1,0 +1,9 @@
+{
+  "serverName": "Persisted Epic World",
+  "levelName": "world",
+  "seed": "persist-seed-777",
+  "gameMode": "creative",
+  "difficulty": "normal",
+  "port": 25565,
+  "properties": {}
+}

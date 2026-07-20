@@ -1,0 +1,44 @@
+{
+  "title": "Wood Harvesting Challenge",
+  "description": "A challenge where bots coordinate to gather wood and craft basic tools.",
+  "objectives": [
+    "Gather 16 Oak Logs",
+    "Craft 16 Oak Wood Planks",
+    "Craft 1 Crafting Table",
+    "Assemble and place the crafting table"
+  ],
+  "bots": [
+    {
+      "id": "bot_whvjwfv61",
+      "name": "LumberjackBob",
+      "role": "Primary wood harvester",
+      "goal": "Move to oak logs, harvest them, and tell Sally when finished",
+      "providerId": "gemini",
+      "model": "gemini-3.5-flash",
+      "inventory": {
+        "wooden_axe": 1
+      },
+      "x": 4,
+      "y": 64,
+      "z": 4,
+      "health": 20,
+      "food": 20
+    },
+    {
+      "id": "bot_j19bzsw2s",
+      "name": "CrafterSally",
+      "role": "Tool and table craftsman",
+      "goal": "Ask Bob for wood, receive planks, and place a crafting table",
+      "providerId": "gemini",
+      "model": "gemini-3.5-flash",
+      "inventory": {
+        "sticks": 4
+      },
+      "x": -3,
+      "y": 64,
+      "z": -2,
+      "health": 20,
+      "food": 20
+    }
+  ]
+}

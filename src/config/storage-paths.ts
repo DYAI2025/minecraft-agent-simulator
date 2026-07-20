@@ -3,7 +3,7 @@ import fs from 'fs';
 
 export function getStorageRoot(): string {
   if (process.env.MISSI_STORAGE_ROOT) {
-    return process.env.MISSI_STORAGE_ROOT;
+    return path.resolve(process.env.MISSI_STORAGE_ROOT);
   }
   return path.resolve(process.cwd());
 }
