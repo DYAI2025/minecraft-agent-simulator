@@ -1,0 +1,45 @@
+{
+  "title": "Survival Sheltering Task",
+  "description": "Agents build a secure parameter out of stone and wood to prepare for nightfall.",
+  "objectives": [
+    "Mine 8 Cobblestone blocks",
+    "Collect 8 Oak Wood logs",
+    "Construct a 4x4 stone boundary",
+    "Place a torch or marker block"
+  ],
+  "bots": [
+    {
+      "id": "bot_kefddwvht",
+      "name": "BuilderBen",
+      "role": "Structural architect",
+      "goal": "Receives stone, builds a flat 4x4 foundation wall, and keeps guard",
+      "providerId": "gemini",
+      "model": "gemini-3.5-flash",
+      "inventory": {
+        "stone_pickaxe": 1
+      },
+      "x": 8,
+      "y": 64,
+      "z": -6,
+      "health": 20,
+      "food": 20
+    },
+    {
+      "id": "bot_jy91ew53w",
+      "name": "GathererGaby",
+      "role": "Resource miner",
+      "goal": "Locates stone hills, mines cobblestone, and delivers to BuilderBen",
+      "providerId": "gemini",
+      "model": "gemini-3.5-flash",
+      "inventory": {
+        "iron_pickaxe": 1,
+        "coal": 2
+      },
+      "x": -8,
+      "y": 64,
+      "z": 7,
+      "health": 20,
+      "food": 20
+    }
+  ]
+}
