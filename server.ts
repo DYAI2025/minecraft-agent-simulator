@@ -98,6 +98,7 @@ async function startServer() {
     const serverStatus = serverService.getStatus();
     const simStatus = orchestrator.getSimulationState();
     const bots = orchestrator.getBots();
+    const botConnectionStatus = orchestrator.getBotConnectionStatus();
     const worldGrid = serverService.getWorldGrid();
     
     res.json({
@@ -108,6 +109,7 @@ async function startServer() {
       currentStep: simStatus.currentStep,
       activeScenario: simStatus.activeScenario,
       bots,
+      botConnectionStatus,
       worldGridSize: worldGrid.length,
       allowSimulationMode: process.env.ALLOW_SIMULATION_MODE !== 'false',
       not_live_ready: serverStatus.runtimeMode === 'simulation' || process.env.ALLOW_SIMULATION_MODE === 'false',

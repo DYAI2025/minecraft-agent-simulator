@@ -54,7 +54,7 @@ export class LLMProviderService {
       },
     });
 
-    const modelName = provider.defaultModel || 'gemini-3.5-flash';
+    const modelName = provider.defaultModel || 'gemini-1.5-flash';
 
     try {
       const response = await ai.models.generateContent({
@@ -252,7 +252,7 @@ export class LLMProviderService {
     prompt: string
   ): Promise<any> {
     const baseUrl = provider.customUrl || 'http://localhost:11434';
-    const model = provider.defaultModel || 'llama3';
+    const model = provider.defaultModel || 'qwen2.5:7b';
 
     try {
       const res = await fetch(`${baseUrl}/api/chat`, {

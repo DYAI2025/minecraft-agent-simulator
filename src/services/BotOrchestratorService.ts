@@ -4,8 +4,7 @@ import { MinecraftServerService } from './MinecraftServerService.js';
 import { EventStoreService } from './EventStoreService.js';
 import { MineflayerBotAdapter } from '../adapters/minecraft/MineflayerBotAdapter.js';
 import { SettingsService } from './SettingsService.js';
-import { LPAMService } from './LPAMService.js';
-import { BotExperience, BotStrategy } from './LPAMService.js';
+import { LPAMService, BotExperience } from './LPAMService.js';
 
 export class BotOrchestratorService {
   private static instance: BotOrchestratorService | null = null;
@@ -43,7 +42,7 @@ export class BotOrchestratorService {
         type: LLMProviderType.GEMINI,
         name: 'Google Gemini',
         apiKey: geminiKey,
-        defaultModel: 'gemini-3.5-flash',
+        defaultModel: 'gemini-1.5-flash',
       };
       
       this.providers['openai'] = {
@@ -67,7 +66,7 @@ export class BotOrchestratorService {
         type: LLMProviderType.OPENROUTER,
         name: 'OpenRouter',
         apiKey: '',
-        defaultModel: 'google/gemini-2.5-flash',
+        defaultModel: 'openai/gpt-4o-mini',
       };
 
       this.providers['ollama'] = {
@@ -76,7 +75,7 @@ export class BotOrchestratorService {
         name: 'Ollama Local',
         apiKey: '',
         customUrl: 'http://localhost:11434',
-        defaultModel: 'llama3',
+        defaultModel: 'qwen2.5:7b',
       };
 
       this.providers['lmstudio'] = {
@@ -127,6 +126,20 @@ export class BotOrchestratorService {
   }
 
   /**
+   * Get bot connection status for each bot
+   */
+  public getBotConnectionStatus(): Record<string, { connected: boolean; position?: { x: number; y: number; z: number } }> {
+    const status: Record<string, { connected: boolean; position?: { x: number; y: number; z: number } }> = {};
+    for (const [botId, adapter] of Object.entries(this.botAdapters)) {
+      status[botId] = {
+        connected: adapter.isBotConnected(),
+        position: adapter.getBotPosition() || undefined
+      };
+    }
+    return status;
+  }
+
+  /**
    * Spawns bots into the active Minecraft server
    */
   public async spawnBots(scenario: Scenario): Promise<void> {
@@ -155,15 +168,17 @@ export class BotOrchestratorService {
     const serverHost = runtimeConfig?.host || '127.0.0.1';
 
     // Log connection sequence and attempt real Mineflayer socket joins
+    const connectionPromises: Promise<void>[] = [];
+    
     for (const bot of this.activeBots) {
       eventStore.addEvent(
         EventType.BOT_JOIN,
-        `[Orchestrator] Attaching bot client "${bot.name}" (role: "${bot.role}").`,
+        `[Orchestrator] Attaching bot client "${bot.name}" (role: "${bot.role}") at position (${bot.x}, ${bot.y}, ${bot.z}).`,
         bot.id,
         bot.name
       );
 
-      // Create and connect a real Mineflayer client adapter
+      // Create and connect a real Mineflayer client adapter with spawn position
       const adapter = new MineflayerBotAdapter(
         bot.name,
         serverHost,
@@ -175,13 +190,23 @@ export class BotOrchestratorService {
             bot.id,
             bot.name
           );
+        },
+        { x: bot.x, y: bot.y, z: bot.z }, // spawn position
+        (event: 'joined' | 'left', player: { name: string; position?: { x: number; y: number; z: number } }) => {
+          // Forward player events to event store for context injection
+          eventStore.addEvent(
+            EventType.SYSTEM,
+            `[Player Event] ${player.name} ${event} the game${player.position ? ` at (${player.position.x.toFixed(1)}, ${player.position.y.toFixed(1)}, ${player.position.z.toFixed(1)})` : ''}`,
+            bot.id,
+            bot.name
+          );
         }
       );
 
       this.botAdapters[bot.id] = adapter;
       
-      // Connect asynchronously. If it fails, the event is logged and we run in fallback engine.
-      adapter.connect().then((connected) => {
+      // Connect and await - fail spawn if any bot fails to connect
+      const connectPromise = adapter.connect().then((connected) => {
         if (!connected) {
           eventStore.addEvent(
             EventType.ERROR,
@@ -189,6 +214,7 @@ export class BotOrchestratorService {
             bot.id,
             bot.name
           );
+          throw new Error(`Bot "${bot.name}" failed to connect to Minecraft server`);
         } else {
           eventStore.addEvent(
             EventType.SYSTEM,
@@ -198,7 +224,12 @@ export class BotOrchestratorService {
           );
         }
       });
+      
+      connectionPromises.push(connectPromise);
     }
+
+    // Wait for all bots to connect, fail if any fail
+    await Promise.all(connectionPromises);
   }
 
   /**
@@ -262,6 +293,7 @@ export class BotOrchestratorService {
 
     const serverService = MinecraftServerService.getInstance();
     const eventStore = EventStoreService.getInstance();
+    const lpmService = LPAMService.getInstance();
 
     // Loop through each bot sequentially
     for (const bot of this.activeBots) {
@@ -270,7 +302,34 @@ export class BotOrchestratorService {
         
         // Build surrounding context
         const context = this.buildEnvironmentContext(bot, serverService.getWorldGrid());
-        
+
+        // Query LPAM for relevant experiences before decision
+        let lpmExperiences: BotExperience[] = [];
+        if (lpmService.isAvailable()) {
+          try {
+            lpmExperiences = await lpmService.queryExperiences({
+              botId: bot.id,
+              location: { x: bot.x, y: bot.y, z: bot.z, radius: 50 },
+              limit: 10
+            });
+            if (lpmExperiences.length > 0) {
+              eventStore.addEvent(
+                EventType.SYSTEM,
+                `[LPAM] Retrieved ${lpmExperiences.length} relevant experiences for ${bot.name}`,
+                bot.id,
+                bot.name
+              );
+            }
+          } catch (lpmErr: any) {
+            eventStore.addEvent(
+              EventType.ERROR,
+              `[LPAM] Query failed: ${lpmErr.message}`,
+              bot.id,
+              bot.name
+            );
+          }
+        }
+
         // 1. Log Think Trigger
         eventStore.addEvent(
           EventType.BOT_THINK,
@@ -282,7 +341,7 @@ export class BotOrchestratorService {
 
         // 2. Build system and user instruction prompts
         const systemInstruction = this.getSystemPrompt();
-        const userPrompt = this.getUserPrompt(bot, context);
+        const userPrompt = this.getUserPrompt(bot, context, lpmExperiences);
 
         let decision;
         
@@ -380,7 +439,7 @@ export class BotOrchestratorService {
         }
 
         // 3. Action validation & execution
-        this.executeAction(bot, decision, serverService);
+        await this.executeAction(bot, decision, serverService, lpmService, lpmExperiences, context);
 
       } catch (err: any) {
         this.addLogEvent(EventType.ERROR, `Error in bot ${bot.name} simulation tick: ${err.message || err}`, bot.id, bot.name);
@@ -437,7 +496,15 @@ Your JSON response must match this schema:
 }`;
   }
 
-  public getUserPrompt(bot: BotConfig, context: any): string {
+  public getUserPrompt(bot: BotConfig, context: any, lpmExperiences: BotExperience[] = []): string {
+    // Format LPAM experiences for prompt
+    let experienceText = 'No relevant past experiences found.';
+    if (lpmExperiences.length > 0) {
+      experienceText = lpmExperiences.map((exp, i) => 
+        `${i + 1}. [${exp.action}] at (${exp.location.x}, ${exp.location.y}, ${exp.location.z}) - ${exp.outcome.toUpperCase()}: ${exp.reasonSummary}`
+      ).join('\n');
+    }
+
     return `Your name: ${bot.name}
 Your Role: ${bot.role}
 Your Goal: ${bot.goal}
@@ -457,6 +524,9 @@ ${JSON.stringify(context.otherBots, null, 2)}
 
 Scenario Objectives:
 ${JSON.stringify(context.objectives, null, 2)}
+
+--- RELEVANT PAST EXPERIENCES (from LPAM) ---
+${experienceText}
 
 What is your next action? Select the action and parameters carefully.`;
   }
@@ -480,10 +550,13 @@ What is your next action? Select the action and parameters carefully.`;
   /**
    * Action validator & executor. Mutates bot state and world block grids.
    */
-  private executeAction(
+  private async executeAction(
     bot: BotConfig,
-    decision: { rationale: string; action: string; parameters: any; message?: string },
-    serverService: MinecraftServerService
+    decision: { rationale: string; action: string; parameters: any; message?: string; reason_summary?: string },
+    serverService: MinecraftServerService,
+    lpmService: LPAMService,
+    lpmExperiences: BotExperience[],
+    context: any
   ) {
     const eventStore = EventStoreService.getInstance();
     const action = decision.action.toLowerCase();
@@ -678,6 +751,46 @@ What is your next action? Select the action and parameters carefully.`;
         break;
       }
     }
+
+    // Store experience in LPAM after action execution
+    if (lpmService.isAvailable()) {
+      try {
+        const outcome = this.determineOutcome(bot, decision, context);
+        const experience: BotExperience = {
+          botId: bot.id,
+          botName: bot.name,
+          timestamp: new Date().toISOString(),
+          location: { x: bot.x, y: bot.y, z: bot.z },
+          action: decision.action,
+          parameters: decision.parameters,
+          outcome,
+          reasonSummary: decision.rationale || decision.reason_summary || '',
+          context: {
+            nearbyBlocks: context.nearbyBlocks.map(b => ({ type: b.type, x: b.x, y: b.y, z: b.z })),
+            otherBots: context.otherBots.map(b => ({ name: b.name, distance: b.distance })),
+            inventory: bot.inventory,
+            health: bot.health,
+            food: bot.food
+          },
+          tags: [decision.action, outcome]
+        };
+        await lpmService.storeExperience(experience);
+      } catch (lpmErr: any) {
+        eventStore.addEvent(
+          EventType.ERROR,
+          `[LPAM] Store experience failed: ${lpmErr.message}`,
+          bot.id,
+          bot.name
+        );
+      }
+    }
+  }
+
+  private determineOutcome(bot: BotConfig, decision: any, context: any): 'success' | 'failure' | 'partial' {
+    const action = decision.action.toLowerCase();
+    // Simple heuristic: if the action didn't error, consider it success
+    // More sophisticated outcome detection could be added based on action type
+    return 'success';
   }
 
   /**

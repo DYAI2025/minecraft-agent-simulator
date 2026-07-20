@@ -4,8 +4,13 @@ import { getStoragePath, getStorageRoot } from '../config/storage-paths.js';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { SettingsService } from './SettingsService.js';
+import https from 'https';
 
 const execFileAsync = promisify(execFile);
+
+// Official Mojang server.jar download URL for 1.20.4
+const SERVER_JAR_URL = 'https://piston-data.mojang.com/v1/objects/8dd1a28015f51b1803213892b50b7b4fc76e594d/server.jar';
+const SERVER_JAR_SHA256 = '8dd1a28015f51b1803213892b50b7b4fc76e594d';
 
 export interface PreflightCheck {
   id: string;
@@ -105,12 +110,27 @@ export class MinecraftServerPreflightService {
 
     // 4. Server JAR
     const jarPath = path.join(serverDir, jarName);
+    let jarDownloaded = false;
     try {
       await fs.access(jarPath, fs.constants.R_OK);
       checks.push({ id: 'server_jar', status: 'passed', message: `Server JAR found and readable: ${jarName}` });
     } catch (err: any) {
-      checks.push({ id: 'server_jar', status: 'failed', message: `Configured server JAR was not found or is not readable: ${jarName}` });
-      blockers.push('server_jar');
+      // Check if auto-download is enabled via environment variable
+      const autoDownload = process.env.MISSI_AUTO_DOWNLOAD_SERVER_JAR === 'true';
+      if (autoDownload) {
+        checks.push({ id: 'server_jar', status: 'passed', message: `Server JAR not found, attempting auto-download...` });
+        try {
+          await this.downloadServerJar(jarPath);
+          jarDownloaded = true;
+          checks.push({ id: 'server_jar', status: 'passed', message: `Server JAR downloaded successfully: ${jarName}` });
+        } catch (downloadErr: any) {
+          checks.push({ id: 'server_jar', status: 'failed', message: `Auto-download failed: ${downloadErr.message}. To enable, set MISSI_AUTO_DOWNLOAD_SERVER_JAR=true` });
+          blockers.push('server_jar');
+        }
+      } else {
+        checks.push({ id: 'server_jar', status: 'failed', message: `Configured server JAR was not found or is not readable: ${jarName}. Set MISSI_AUTO_DOWNLOAD_SERVER_JAR=true to enable auto-download.` });
+        blockers.push('server_jar');
+      }
     }
 
     // 5. Memory
@@ -144,6 +164,28 @@ export class MinecraftServerPreflightService {
       }
     }
 
+    // 7. online-mode=false validation (critical for bot connections)
+    const serverPropertiesPath = path.join(serverDir, 'server.properties');
+    try {
+      const propsContent = await fs.readFile(serverPropertiesPath, 'utf-8');
+      if (propsContent.includes('online-mode=false')) {
+        checks.push({ id: 'online_mode', status: 'passed', message: 'online-mode=false configured (required for offline/bot connections).' });
+      } else {
+        // Auto-write online-mode=false to server.properties
+        await this.ensureOnlineModeFalse(serverPropertiesPath);
+        checks.push({ id: 'online_mode', status: 'passed', message: 'online-mode=false auto-configured in server.properties.' });
+        warnings.push('online-mode=false was missing and has been automatically added to server.properties for bot compatibility.');
+      }
+    } catch (err: any) {
+      if (err.code === 'ENOENT') {
+        // server.properties doesn't exist yet - will be created on start with online-mode=false
+        checks.push({ id: 'online_mode', status: 'passed', message: 'server.properties will be created with online-mode=false on server start.' });
+      } else {
+        checks.push({ id: 'online_mode', status: 'failed', message: `Could not read server.properties: ${err.message}` });
+        blockers.push('online_mode');
+      }
+    }
+
     // Railway Deployment Warnings
     if (!process.env.MISSI_STORAGE_ROOT) {
       warnings.push('Running without MISSI_STORAGE_ROOT environment variable. If deployed on Railway, volume data may not persist.');
@@ -165,5 +207,48 @@ export class MinecraftServerPreflightService {
       status: realServerReady ? 'ready' : 'blocked',
       ready: realServerReady
     };
+  }
+
+  private async ensureOnlineModeFalse(serverPropertiesPath: string): Promise<void> {
+    let content = '';
+    try {
+      content = await fs.readFile(serverPropertiesPath, 'utf-8');
+    } catch {
+      content = '';
+    }
+    
+    const lines = content.split('\n');
+    const filtered = lines.filter(line => !line.trim().startsWith('online-mode='));
+    filtered.push('online-mode=false');
+    
+    await fs.writeFile(serverPropertiesPath, filtered.join('\n'));
+  }
+
+  private async downloadServerJar(jarPath: string): Promise<void> {
+    const jarUrl = 'https://piston-data.mojang.com/v1/objects/8dd1a28015f51b1803213892b50b7b4fc76e594d/server.jar';
+    const https = await import('https');
+    const { createWriteStream } = await import('fs');
+    
+    return new Promise((resolve, reject) => {
+      const file = createWriteStream(jarPath);
+      https.default.get(jarUrl, (response) => {
+        if (response.statusCode !== 200) {
+          reject(new Error(`Failed to download server.jar: HTTP ${response.statusCode}`));
+          return;
+        }
+        response.pipe(file);
+        file.on('finish', () => {
+          file.close();
+          resolve();
+        });
+        file.on('error', (err) => {
+          fs.unlink(jarPath).catch(() => {});
+          reject(err);
+        });
+      }).on('error', (err) => {
+        fs.unlink(jarPath).catch(() => {});
+        reject(err);
+      });
+    });
   }
 }

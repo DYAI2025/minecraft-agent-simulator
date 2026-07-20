@@ -1,15 +1,43 @@
 import mineflayer from 'mineflayer';
 
+export interface SpawnPosition {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface PlayerInfo {
+  name: string;
+  position?: { x: number; y: number; z: number };
+}
+
 export class MineflayerBotAdapter {
   private bot: any = null;
   private isConnected: boolean = false;
+  private spawnPosition?: SpawnPosition;
+  private onPlayerEvent?: (event: 'joined' | 'left', player: PlayerInfo) => void;
 
   constructor(
     private name: string,
     private host: string,
     private port: number,
-    private onLog: (msg: string, isError?: boolean) => void
-  ) {}
+    private onLog: (msg: string, isError?: boolean) => void,
+    spawnPosition?: SpawnPosition,
+    onPlayerEvent?: (event: 'joined' | 'left', player: PlayerInfo) => void
+  ) {
+    this.spawnPosition = spawnPosition;
+    this.onPlayerEvent = onPlayerEvent;
+  }
+
+  public isBotConnected(): boolean {
+    return this.isConnected;
+  }
+
+  public getBotPosition(): { x: number; y: number; z: number } | null {
+    if (!this.bot || !this.isConnected) return null;
+    const pos = this.bot.entity.position;
+    return { x: pos.x, y: pos.y, z: pos.z };
+  }
 
   public connect(): Promise<boolean> {
     let resolveRef: (value: boolean) => void;
@@ -36,6 +64,14 @@ export class MineflayerBotAdapter {
       this.bot.on('spawn', () => {
         this.isConnected = true;
         this.onLog(`[Mineflayer Sockets] Bot ${this.name} spawned in world successfully at [${this.bot.entity.position.toString()}].`);
+        
+        // Teleport to desired spawn position if provided
+        if (this.spawnPosition) {
+          const { x, y, z } = this.spawnPosition;
+          this.bot.entity.position.set(x, y, z);
+          this.onLog(`[Mineflayer Sockets] Bot ${this.name} teleported to spawn position (${x}, ${y}, ${z}).`);
+        }
+        
         if (resolveRef) resolveRef(true);
       });
 
@@ -53,6 +89,26 @@ export class MineflayerBotAdapter {
       this.bot.on('end', () => {
         this.onLog(`[Mineflayer Sockets] Bot ${this.name} connection terminated.`);
         this.isConnected = false;
+      });
+
+      // Player join/leave events for context injection
+      this.bot.on('playerJoined', (player: any) => {
+        if (player.username !== this.name) {
+          const pos = player.entity?.position ? { x: player.entity.position.x, y: player.entity.position.y, z: player.entity.position.z } : undefined;
+          this.onLog(`[Mineflayer Sockets] Player joined: ${player.username} at ${pos ? JSON.stringify(pos) : 'unknown position'}`);
+          if (this.onPlayerEvent) {
+            this.onPlayerEvent('joined', { name: player.username, position: pos });
+          }
+        }
+      });
+
+      this.bot.on('playerLeft', (player: any) => {
+        if (player.username !== this.name) {
+          this.onLog(`[Mineflayer Sockets] Player left: ${player.username}`);
+          if (this.onPlayerEvent) {
+            this.onPlayerEvent('left', { name: player.username });
+          }
+        }
       });
     } catch (err: any) {
       this.onLog(`[Mineflayer Exception] Error establishing bot socket: ${err.message}`, true);
@@ -115,8 +171,8 @@ export class MineflayerBotAdapter {
           }
           case 'harvest': {
             const { blockType, x, y, z } = params;
-            const targetPos = x !== undefined && y !== undefined && z !== undefined 
-              ? { x, y, z } 
+            const targetPos = x !== undefined && y !== undefined && z !== undefined
+              ? { x, y, z }
               : this.findNearestBlock(blockType);
             
             if (targetPos) {
@@ -148,7 +204,7 @@ export class MineflayerBotAdapter {
           }
           case 'place': {
             const { blockType, x, y, z } = params;
-            const referencePos = x !== undefined && y !== undefined && z !== undefined 
+            const referencePos = x !== undefined && y !== undefined && z !== undefined
               ? { x, y, z }
               : this.findPlacePosition(blockType);
             
