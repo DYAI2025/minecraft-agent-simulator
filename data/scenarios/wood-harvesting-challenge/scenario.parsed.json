@@ -9,7 +9,7 @@
   ],
   "bots": [
     {
-      "id": "bot_tu3nqf37a",
+      "id": "bot_gq6pvxbr1",
       "name": "LumberjackBob",
       "role": "Primary wood harvester",
       "goal": "Move to oak logs, harvest them, and tell Sally when finished",
@@ -25,7 +25,7 @@
       "food": 20
     },
     {
-      "id": "bot_seu7zbz9l",
+      "id": "bot_8vkm0n4jz",
       "name": "CrafterSally",
       "role": "Tool and table craftsman",
       "goal": "Ask Bob for wood, receive planks, and place a crafting table",

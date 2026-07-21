@@ -1,0 +1,65 @@
+{
+  "id": "run_1784596530356",
+  "startTime": "2026-07-21T01:15:30.356Z",
+  "scenarioTitle": "Live Wood Harvest",
+  "serverConfig": {
+    "serverName": "MISSI-Server",
+    "levelName": "world",
+    "seed": "987654321",
+    "gameMode": "survival",
+    "difficulty": "normal",
+    "port": 25565,
+    "properties": {}
+  },
+  "status": "running",
+  "logs": [
+    {
+      "id": "evt_5cqe2op82",
+      "timestamp": "2026-07-21T01:15:30.356Z",
+      "type": "system",
+      "message": "Autonomous Minecraft Scenario Simulation loop started."
+    },
+    {
+      "id": "evt_cux6uosfc",
+      "timestamp": "2026-07-21T01:15:30.356Z",
+      "type": "system",
+      "message": "--- Simulation Step #184 ---"
+    },
+    {
+      "id": "evt_o7yqqmmrs",
+      "timestamp": "2026-07-21T01:15:30.356Z",
+      "type": "bot_think",
+      "botId": "bot-live",
+      "botName": "LiveLumberjack",
+      "message": "LiveLumberjack is thinking about next action... Using Provider: Google Gemini (gemini-1.5-flash)",
+      "details": {
+        "providerId": "gemini",
+        "model": "gemini-1.5-flash"
+      }
+    }
+  ],
+  "scenario": {
+    "id": "live-demo",
+    "title": "Live Wood Harvest",
+    "description": "Real server wood harvest",
+    "objectives": [
+      "harvest oak logs"
+    ],
+    "bots": [
+      {
+        "id": "bot-live",
+        "name": "LiveLumberjack",
+        "role": "Lumberjack",
+        "goal": "harvest oak logs",
+        "providerId": "gemini",
+        "model": "gemini-1.5-flash",
+        "inventory": {},
+        "x": 100,
+        "y": 64,
+        "z": 100,
+        "health": 20,
+        "food": 20
+      }
+    ]
+  }
+}

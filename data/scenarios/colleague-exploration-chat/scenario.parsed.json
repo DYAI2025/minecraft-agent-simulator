@@ -8,7 +8,7 @@
   ],
   "bots": [
     {
-      "id": "bot_z0tqyeqxe",
+      "id": "bot_1urj5qyxc",
       "name": "ExplorerEli",
       "role": "Field cartographer",
       "goal": "Move around corners, search for lakes, and talk with Ava",
@@ -24,7 +24,7 @@
       "food": 20
     },
     {
-      "id": "bot_x22rxxjo8",
+      "id": "bot_argl7wudk",
       "name": "SurveyorAva",
       "role": "Landscape analyst",
       "goal": "Stand near center, verify grid levels, and log findings in chat",

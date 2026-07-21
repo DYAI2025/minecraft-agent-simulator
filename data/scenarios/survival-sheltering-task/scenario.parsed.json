@@ -9,7 +9,7 @@
   ],
   "bots": [
     {
-      "id": "bot_kefddwvht",
+      "id": "bot_gfqdoioq0",
       "name": "BuilderBen",
       "role": "Structural architect",
       "goal": "Receives stone, builds a flat 4x4 foundation wall, and keeps guard",
@@ -25,7 +25,7 @@
       "food": 20
     },
     {
-      "id": "bot_jy91ew53w",
+      "id": "bot_m5cau9v4d",
       "name": "GathererGaby",
       "role": "Resource miner",
       "goal": "Locates stone hills, mines cobblestone, and delivers to BuilderBen",

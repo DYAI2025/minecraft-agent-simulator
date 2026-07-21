@@ -7,3 +7,23 @@ coverage/
 .env*
 !.env.example
 data/secrets/
+
+# MISSI runtime data (generated)
+data/runs/
+data/minecraft-server/world/
+data/minecraft-server/logs/
+data/minecraft-server/stats/
+data/minecraft-server/playerdata/
+data/minecraft-server/advancements/
+data/minecraft-server/poi/
+data/minecraft-server/region/
+data/minecraft-server/entities/
+data/minecraft-server/data/
+data/minecraft-server/advancements/
+data/minecraft-server/session.lock
+data/minecraft-server/usercache.json
+data/minecraft-server/banned-*.json
+data/minecraft-server/ops.json
+data/minecraft-server/whitelist.json
+data/minecraft-server/usercache.json
+data/minecraft-server/server.properties
